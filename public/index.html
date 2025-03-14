@@ -80,6 +80,7 @@
         async function sendMessage() {
             const message = document.getElementById('chatInput').value;
             await supabase.from('chat').insert([{ room_id: roomId, user_id: userId, message }]);
+            window.sendMessage = sendMessage;
         }
 
         supabase.from('chat').on('INSERT', payload => {
