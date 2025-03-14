@@ -64,28 +64,35 @@
 
     <script type="module">
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-        const supabase = createClient('https://lhomlvjjzrfuseohggxg.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxob21sdmpqenJmdXNlb2hnZ3hnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDE5ODE5NzQsImV4cCI6MjA1NzU1Nzk3NH0.cse3S9rYDPh9KQng1AouiiS56EUlDa5i_u9td37PdTU');
-        const roomId = Math.floor(Math.random() * 10000); // Temporary random room ID
-        const userId = Math.random().toString(36).substr(2, 9);
         
+        const supabase = createClient('https://lhomlvjjzrfuseohggxg.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...');
+        
+        const roomId = Math.floor(Math.random() * 10000);
+        const userId = Math.random().toString(36).substr(2, 9);
+    
         const localVideo = document.getElementById('localVideo');
         const remoteVideo = document.getElementById('remoteVideo');
-        
+    
         navigator.mediaDevices.getUserMedia({ video: true, audio: true })
             .then(stream => {
                 localVideo.srcObject = stream;
                 // Send this stream to Supabase later
             });
-
+    
         async function sendMessage() {
             const message = document.getElementById('chatInput').value;
             await supabase.from('chat').insert([{ room_id: roomId, user_id: userId, message }]);
-            window.sendMessage = sendMessage;
         }
-
-        supabase.from('chat').on('INSERT', payload => {
-            document.getElementById('chatMessages').innerHTML += `<p>${payload.new.message}</p>`;
-        }).subscribe();
+    
+        window.sendMessage = sendMessage;
+    
+        // Realtime Subscription using Supabase v2 syntax
+        const channel = supabase
+            .channel('realtime_chat')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat' }, payload => {
+                document.getElementById('chatMessages').innerHTML += `<p>${payload.new.message}</p>`;
+            })
+            .subscribe();
     </script>
 </body>
 </html>
